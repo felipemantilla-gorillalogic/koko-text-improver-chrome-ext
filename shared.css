@@ -1,0 +1,77 @@
+.koko-improver-extension {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f0f8ff;
+  margin: 0;
+  padding: 20px;
+}
+
+.koko-improver-container {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.koko-improver-h1,
+.koko-improver-h2 {
+  color: #4a90e2;
+  margin-top: 0;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.koko-improver-logo {
+  display: block;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 20px;
+  background-color: #4a90e2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.koko-improver-logo img {
+  width: 75px;
+  height: 75px;
+}
+
+.koko-improver-button {
+  width: 100%;
+  padding: 10px;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.koko-improver-button:hover {
+  background-color: #357abd;
+}
+
+.koko-improver-input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.koko-improver-label {
+  display: block;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.koko-improver-status {
+  margin-top: 15px;
+  text-align: center;
+  font-size: 14px;
+  color: #4caf50;
+}

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text Improver with Koko - Settings</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .koko-improver-extension {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .koko-improver-container {
+      width: 100%;
+      max-width: 400px;
+    }
+  </style>
+</head>
+<body class="koko-improver-extension">
+  <div class="koko-improver-container">
+    <div class="koko-improver-logo">
+      <img id="logoImage" alt="Logo">
+    </div>
+    <h1 class="koko-improver-h1">Claude API Key Configuration</h1>
+    <label for="apiKey" class="koko-improver-label">Claude API Key:</label>
+    <input type="text" id="apiKey" class="koko-improver-input" placeholder="Enter your API key here" />
+    <button id="save" class="koko-improver-button">Save</button>
+    <div id="status" class="koko-improver-status"></div>
+  </div>
+  <script src="logoData.js"></script>
+  <script src="loadLogo.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>
