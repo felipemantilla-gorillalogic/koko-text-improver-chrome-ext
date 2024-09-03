@@ -144,7 +144,14 @@ function replaceSelectedText(newText) {
 
 function showResponse(response) {
   hideSpinner();
-  replaceSelectedText(response);
+  
+  // Parse the response if it's a string
+  const parsedResponse = typeof response === 'string' ? JSON.parse(response) : response;
+  
+  // Only replace the selected text if there's no error
+  if (!parsedResponse.hasError) {
+    replaceSelectedText(parsedResponse.improvedText);
+  }
 
   const div = document.createElement('div');
   div.style.position = 'fixed';
@@ -164,6 +171,7 @@ function showResponse(response) {
   div.style.opacity = '0';
   div.style.transition = 'all 0.3s ease-in-out';
   div.style.transform = 'translateY(20px)';
+  div.style.boxSizing = 'border-box';
 
   const header = document.createElement('div');
   header.style.display = 'flex';
@@ -176,15 +184,15 @@ function showResponse(response) {
   titleContainer.style.alignItems = 'center';
 
   const icon = document.createElement('span');
-  icon.innerHTML = '✅';
+  icon.innerHTML = parsedResponse.hasError ? '⚠️' : '✅';
   icon.style.fontSize = '20px';
   icon.style.marginRight = '10px';
-  icon.style.color = '#4CAF50';
+  icon.style.color = parsedResponse.hasError ? '#FFA500' : '#4CAF50';
 
   const title = document.createElement('span');
-  title.textContent = 'Text Improved Successfully!';
+  title.textContent = parsedResponse.hasError ? 'Error Occurred' : 'Text Improved Successfully!';
   title.style.fontWeight = 'bold';
-  title.style.color = '#4a90e2';
+  title.style.color = parsedResponse.hasError ? '#FFA500' : '#4a90e2';
   title.style.fontSize = '16px';
 
   titleContainer.appendChild(icon);
@@ -215,58 +223,82 @@ function showResponse(response) {
   header.appendChild(titleContainer);
   header.appendChild(closeButton);
 
-  const textArea = document.createElement('textarea');
-  textArea.value = response;
-  textArea.style.width = '100%';
-  textArea.style.height = '120px';
-  textArea.style.marginBottom = '15px';
-  textArea.style.padding = '10px';
-  textArea.style.border = '1px solid #e0e0e0';
-  textArea.style.borderRadius = '6px';
-  textArea.style.resize = 'vertical';
-  textArea.style.fontSize = '14px';
-  textArea.style.lineHeight = '1.4';
-  textArea.style.color = '#333333';
-  textArea.style.transition = 'border-color 0.3s ease';
-  textArea.addEventListener('focus', () => {
-    textArea.style.borderColor = '#4a90e2';
-    textArea.style.outline = 'none';
-  });
-  textArea.addEventListener('blur', () => {
-    textArea.style.borderColor = '#e0e0e0';
-  });
+  const contentContainer = document.createElement('div');
+  contentContainer.style.marginBottom = '15px';
+  contentContainer.style.width = '100%';
+  contentContainer.style.boxSizing = 'border-box';
 
-  const copyButton = document.createElement('button');
-  copyButton.textContent = 'Copy to Clipboard';
-  copyButton.style.backgroundColor = '#4a90e2';
-  copyButton.style.color = 'white';
-  copyButton.style.border = 'none';
-  copyButton.style.padding = '10px 15px';
-  copyButton.style.borderRadius = '6px';
-  copyButton.style.cursor = 'pointer';
-  copyButton.style.fontSize = '14px';
-  copyButton.style.fontWeight = 'bold';
-  copyButton.style.transition = 'background-color 0.3s ease';
-  copyButton.addEventListener('mouseover', () => {
-    copyButton.style.backgroundColor = '#357abd';
-  });
-  copyButton.addEventListener('mouseout', () => {
+  if (parsedResponse.hasError) {
+    const errorMessage = document.createElement('p');
+    errorMessage.textContent = parsedResponse.error;
+    errorMessage.style.color = '#FFA500';
+    contentContainer.appendChild(errorMessage);
+  } else {
+    const justificationBox = document.createElement('div');
+    justificationBox.textContent = parsedResponse.justification;
+    justificationBox.style.width = '100%';
+    justificationBox.style.backgroundColor = '#f0f0f0';
+    justificationBox.style.border = '1px solid #e0e0e0';
+    justificationBox.style.borderRadius = '6px';
+    justificationBox.style.padding = '10px';
+    justificationBox.style.marginBottom = '15px';
+    justificationBox.style.fontSize = '14px';
+    justificationBox.style.lineHeight = '1.4';
+    justificationBox.style.color = '#666666';
+    justificationBox.style.boxSizing = 'border-box';
+
+    const improvedTextArea = document.createElement('textarea');
+    improvedTextArea.value = parsedResponse.improvedText;
+    improvedTextArea.style.width = '100%';
+    improvedTextArea.style.height = '80px';
+    improvedTextArea.style.marginBottom = '15px';
+    improvedTextArea.style.padding = '10px';
+    improvedTextArea.style.border = '1px solid #e0e0e0';
+    improvedTextArea.style.borderRadius = '6px';
+    improvedTextArea.style.resize = 'vertical';
+    improvedTextArea.style.fontSize = '14px';
+    improvedTextArea.style.lineHeight = '1.4';
+    improvedTextArea.style.color = '#333333';
+    improvedTextArea.style.boxSizing = 'border-box';
+
+    const copyButton = document.createElement('button');
+    copyButton.textContent = 'Copy Improved Text';
+    copyButton.style.width = '100%';
     copyButton.style.backgroundColor = '#4a90e2';
-  });
-  copyButton.addEventListener('click', () => {
-    textArea.select();
-    document.execCommand('copy');
-    copyButton.textContent = 'Copied!';
-    copyButton.style.backgroundColor = '#4CAF50';
-    setTimeout(() => {
-      copyButton.textContent = 'Copy to Clipboard';
+    copyButton.style.color = 'white';
+    copyButton.style.border = 'none';
+    copyButton.style.padding = '10px 15px';
+    copyButton.style.borderRadius = '6px';
+    copyButton.style.cursor = 'pointer';
+    copyButton.style.fontSize = '14px';
+    copyButton.style.fontWeight = 'bold';
+    copyButton.style.transition = 'background-color 0.3s ease';
+    copyButton.style.boxSizing = 'border-box';
+    
+    copyButton.addEventListener('mouseover', () => {
+      copyButton.style.backgroundColor = '#357abd';
+    });
+    copyButton.addEventListener('mouseout', () => {
       copyButton.style.backgroundColor = '#4a90e2';
-    }, 2000);
-  });
+    });
+    copyButton.addEventListener('click', () => {
+      improvedTextArea.select();
+      document.execCommand('copy');
+      copyButton.textContent = 'Copied!';
+      copyButton.style.backgroundColor = '#4CAF50';
+      setTimeout(() => {
+        copyButton.textContent = 'Copy Improved Text';
+        copyButton.style.backgroundColor = '#4a90e2';
+      }, 2000);
+    });
+
+    contentContainer.appendChild(justificationBox);
+    contentContainer.appendChild(improvedTextArea);
+    contentContainer.appendChild(copyButton);
+  }
 
   div.appendChild(header);
-  div.appendChild(textArea);
-  div.appendChild(copyButton);
+  div.appendChild(contentContainer);
   document.body.appendChild(div);
 
   // Trigger reflow to ensure the transition works
@@ -278,9 +310,8 @@ function showResponse(response) {
     div.style.opacity = '0';
     div.style.transform = 'translateY(20px)';
     setTimeout(() => div.remove(), 300);
-  }, 15000);  // Aumentado a 15 segundos para dar más tiempo para copiar
+  }, 20000);  // 20 seconds to give more time for reading and copying
 }
-
 document.addEventListener('mouseup', showButton);
 document.addEventListener('selectionchange', showButton);
 
