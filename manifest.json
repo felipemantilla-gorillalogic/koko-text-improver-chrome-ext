@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Koko - Text improver",
-  "version": "1.0",
+  "version": "1.1",
   "description": "This extension will help you to improve your text with Koko",
-  "permissions": ["activeTab", "storage", "contextMenus"],
+  "permissions": ["activeTab", "storage", "contextMenus", "clipboardWrite"],
   "background": {
     "service_worker": "background.js"
   },

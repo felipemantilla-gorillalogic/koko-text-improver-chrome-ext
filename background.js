@@ -17,7 +17,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   }
 });
 
-async function sendToClaude(text) {
+async function sendToClaude(text, promptType = 'improve') {
   // Get Claude's API key from storage
   const { claudeApiKey } = await chrome.storage.sync.get('claudeApiKey');
 
@@ -25,10 +25,11 @@ async function sendToClaude(text) {
     throw new Error('Claude API key not configured. Please set it in the options page.');
   }
 
-  const prompt = `
+  const prompts = {
+    improve: `
 You are an AI language model specialized in improving written text. Analyze the provided text and return an enhanced version with a justification for the changes. Your response must be a JSON-parsable object with this exact structure:
 {
-"improvedText": "The enhanced version of the input text",
+"response": "The enhanced version of the input text",
 "justification": "A concise explanation of the changes and their benefits",
 "hasError": boolean,
 "error": "Error message if applicable, or an empty string"
@@ -47,7 +48,7 @@ If you cannot improve the text or encounter any issues:
 
 - Set "hasError" to true
 - Provide a brief explanation in the "error" field
-- Leave "improvedText" and "justification" as empty strings
+- Leave "response" and "justification" as empty strings
 
 Otherwise:
 
@@ -59,7 +60,60 @@ Improve the following text:
 <text>
 ${text}
 </text>
-`;
+`,
+    translateENtoES: `
+Translate the following English text to Spanish. Your response must be a JSON-parsable object with this exact structure:
+{
+"response": "The Spanish translation of the input text",
+"justification": "The original English text",
+"hasError": boolean,
+"error": "Error message if applicable, or an empty string"
+}
+
+If you cannot translate the text or encounter any issues:
+- Set "hasError" to true
+- Provide a brief explanation in the "error" field
+- Leave "response" and "justification" as empty strings
+
+Otherwise:
+- Set "hasError" to false
+- Leave the "error" field as an empty string
+- Set "justification" to the original English text
+
+IMPORTANT: ONLY RETURN THE JSON OBJECT AS SPECIFIED. DO NOT INCLUDE ANY ADDITIONAL TEXT OR EXPLANATIONS OUTSIDE THE JSON STRUCTURE.
+Translate the following text:
+<text>
+${text}
+</text>
+`,
+    translateEStoEN: `
+Translate the following Spanish text to English. Your response must be a JSON-parsable object with this exact structure:
+{
+"response": "The English translation of the input text",
+"justification": "The original Spanish text",
+"hasError": boolean,
+"error": "Error message if applicable, or an empty string"
+}
+
+If you cannot translate the text or encounter any issues:
+- Set "hasError" to true
+- Provide a brief explanation in the "error" field
+- Leave "response" and "justification" as empty strings
+
+Otherwise:
+- Set "hasError" to false
+- Leave the "error" field as an empty string
+- Set "justification" to the original Spanish text
+
+IMPORTANT: ONLY RETURN THE JSON OBJECT AS SPECIFIED. DO NOT INCLUDE ANY ADDITIONAL TEXT OR EXPLANATIONS OUTSIDE THE JSON STRUCTURE.
+Translate the following text:
+<text>
+${text}
+</text>
+`
+  };
+
+  const prompt = prompts[promptType] || prompts.improve;
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -91,7 +145,7 @@ ${text}
   } catch (error) {
     console.error('Error parsing Claude response:', error);
     return {
-      improvedText: '',
+      response: '',
       justification: '',
       hasError: true,
       error: 'Failed to parse Claude response'
@@ -101,9 +155,16 @@ ${text}
 
 // Listener for messages from content.js
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "processText") {
-    sendToClaude(request.text)
+  if (request.action) {
+    const mappedActions = {
+      improveText: "improve",
+      translateENtoES: "translateENtoES",
+      translateEStoEN: "translateEStoEN"
+    }
+
+    sendToClaude(request.text, mappedActions[request.action])
       .then(response => {
+        console.log('Claude response:', response);  
         chrome.tabs.sendMessage(sender.tab.id, {
           action: "showClaudeResponse",
           response: response

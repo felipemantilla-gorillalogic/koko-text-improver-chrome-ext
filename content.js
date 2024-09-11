@@ -1,61 +1,181 @@
 let processButton = null;
 let lastSelection = null;
 let spinner = null;
+let isLoading = false;
+
+function saveSelection() {
+  const selection = window.getSelection();
+  if (selection.rangeCount > 0) {
+    lastSelection = selection.getRangeAt(0).cloneRange();
+  }
+}
+
+function restoreSelection() {
+  if (lastSelection) {
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(lastSelection);
+  }
+}
+
+
 
 function createButton() {
-  if (!processButton) {
-    processButton = document.createElement('button');
-    
-    processButton.innerHTML = `
-      <span style="vertical-align: middle; margin-right: 2px;">Improve with</span>
-      <img src="data:image/png;base64,${logoBase64}" alt="Icon" style="width: 32px; height: 32px; vertical-align: middle;">
+  console.log("Iniciando createButton");
+  if (!window.processButton) {
+    console.log("Creando nuevo processButton");
+    window.processButton = document.createElement('div');
+
+    window.processButton.innerHTML = `
+      <div id="processButtonContent">
+        <div id="improveText" title="Improve Text">
+           <img src="data:image/png;base64,${logoBase64}" alt="Improve" class="icon" title="Improve Text">
+        </div>
+        <span class="separator">|</span>
+        <div class="translate-option" id="translateENtoES" title="Translate English to Spanish">
+          <span class="translate-label">EN</span>
+          <span class="translate-arrow">→</span>
+          <span class="translate-label">ES</span>
+        </div>
+        <span class="separator">|</span>
+        <div class="translate-option" id="translateEStoEN"  title="Translate Spanish to English">
+          <span class="translate-label">ES</span>
+          <span class="translate-arrow">→</span>
+          <span class="translate-label">EN</span>
+        </div>
+      </div>
     `;
-    processButton.style.position = 'absolute';
-    processButton.style.zIndex = '1000';
-    processButton.style.display = 'none';
-    processButton.style.padding = '3px 6px';
-    processButton.style.fontSize = '12px';
-    processButton.style.fontWeight = 'bold';
-    processButton.style.color = '#4a90e2';
-    processButton.style.backgroundColor = 'white';
-    processButton.style.border = '2px solid #4a90e2';
-    processButton.style.borderRadius = '24px';
-    processButton.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
-    processButton.style.cursor = 'pointer';
-    processButton.style.transition = 'all 0.3s ease';
-    processButton.style.display = 'flex';
-    processButton.style.alignItems = 'center';
-    processButton.style.justifyContent = 'center';
+    window.processButton.style.position = 'absolute';
+    window.processButton.style.zIndex = '1000';
+    window.processButton.style.padding = '6px 10px';
+    window.processButton.style.backgroundColor = 'white';
+    window.processButton.style.borderRadius = '20px';
+    window.processButton.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
+    window.processButton.style.cursor = 'pointer';
+    window.processButton.style.transition = 'all 0.3s ease';
+    window.processButton.style.display = 'flex';
+    window.processButton.style.alignItems = 'center';
+    window.processButton.style.justifyContent = 'center';
+    window.processButton.style.whiteSpace = 'nowrap';
 
-    // Add hover effect
-    processButton.addEventListener('mouseover', () => {
-      processButton.style.backgroundColor = '#f0f8ff';
-      processButton.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
-    });
+    const style = document.createElement('style');
+    style.textContent = `
+      #processButtonContent {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+      }
+      #processButtonContent .icon {
+        width: 30px;
+        height: 30px;
+        margin: 0 5px;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+        vertical-align: middle;
+      }
+      #processButtonContent .icon:hover {
+        transform: scale(1.1);
+        background-color: #f0f8ff;
+        border-radius: 50%;
+      }
+      #processButtonContent .separator {
+        color: #4a90e2;
+        margin: 0 5px;
+        font-weight: bold;
+        vertical-align: middle;
+      }
+      #processButtonContent .translate-option {
+        display: flex;
+        align-items: center;
+        background-color: #f0f8ff;
+        border-radius: 12px;
+        padding: 4px 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      #processButtonContent .translate-option:hover {
+        background-color: #e1f0ff;
+        transform: scale(1.05);
+      }
+      #processButtonContent .translate-label {
+        font-weight: bold;
+        font-size: 11px;
+        color: #4a90e2;
+      }
+      #processButtonContent .translate-arrow {
+        color: #4a90e2;
+        margin: 0 2px;
+        font-size: 12px;
+      }
+    `;
+    document.head.appendChild(style);
 
-    processButton.addEventListener('mouseout', () => {
-      processButton.style.backgroundColor = 'white';
-      processButton.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
-    });
+    window.processButton.id = 'processButton';
+    document.body.appendChild(window.processButton);
 
-    // Add click effect
-    processButton.addEventListener('mousedown', () => {
-      processButton.style.transform = 'scale(0.95)';
-    });
+    // Funciones de manejo de eventos
+    function handleAction(action, event) {
+      event.preventDefault();
+      event.stopPropagation();
+      
+      const selectedText = lastSelection ? lastSelection.toString().trim() : '';  
+      
+      if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage({ action, text: selectedText });
+      } else {
+        console.error("chrome.runtime.sendMessage no está disponible");
+      }
+      
+      if (typeof showSpinner === 'function') {
+        showSpinner();
+      } else {
+        console.warn("La función showSpinner no está definida");
+      }
+      
+      // Restaurar la selección después de un breve retraso
+      setTimeout(restoreSelection, 0);
+    }
 
-    processButton.addEventListener('mouseup', () => {
-      processButton.style.transform = 'scale(1)';
-    });
+    function saveSelection() {
+      const selection = window.getSelection();
+      if (selection.rangeCount > 0) {
+        lastSelection = selection.getRangeAt(0).cloneRange();
+      }
+    }
 
-    document.body.appendChild(processButton);
+    function restoreSelection() {
+      if (lastSelection) {
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(lastSelection);
+      }
+    }
 
-    processButton.addEventListener('click', () => {
-      const selectedText = window.getSelection().toString().trim();
-      chrome.runtime.sendMessage({action: "processText", text: selectedText});
-      showSpinner();
-    });
-  }
-  return processButton;
+    // Añadir event listeners
+    const improveTextBtn = window.processButton.querySelector('#improveText');
+    const translateENtoESBtn = window.processButton.querySelector('#translateENtoES');
+    const translateEStoENBtn = window.processButton.querySelector('#translateEStoEN');
+
+    if (improveTextBtn) {
+      improveTextBtn.addEventListener('mousedown', saveSelection);
+      improveTextBtn.addEventListener('click', (event) => handleAction('improveText', event));
+    } 
+
+    if (translateENtoESBtn) {
+      translateENtoESBtn.addEventListener('mousedown', saveSelection);
+      translateENtoESBtn.addEventListener('click', (event) => handleAction('translateENtoES', event));
+    } else {
+      console.error("translateENtoESBtn no encontrado");
+    }
+
+    if (translateEStoENBtn) {
+      translateEStoENBtn.addEventListener('mousedown', saveSelection);
+      translateEStoENBtn.addEventListener('click', (event) => handleAction('translateEStoEN', event));  
+    } 
+  } 
+  
+  return window.processButton;
 }
 
 function createSpinner() {
@@ -70,7 +190,7 @@ function createSpinner() {
     spinner.style.borderTop = '4px solid #4a90e2';
     spinner.style.borderRadius = '50%';
     spinner.style.animation = 'spin 1s linear infinite';
-    
+
     const style = document.createElement('style');
     style.textContent = `
       @keyframes spin {
@@ -85,39 +205,72 @@ function createSpinner() {
 }
 
 function showSpinner() {
+  isLoading = true;
   const spinnerElement = createSpinner();
-  const buttonRect = processButton.getBoundingClientRect();
-  
+  const buttonRect = window.processButton.getBoundingClientRect();
+
   spinnerElement.style.left = `${buttonRect.left + window.scrollX}px`;
   spinnerElement.style.top = `${buttonRect.top + window.scrollY}px`;
   spinnerElement.style.display = 'block';
-  
-  processButton.style.display = 'none';
+
+  window.processButton.style.display = 'none';
 }
 
 function hideSpinner() {
   if (spinner) {
+    isLoading = false;
     spinner.style.display = 'none';
   }
 }
 
+function getSelectedText() {
+  let selectedText = '';
+
+  // Check if there's a selection in standard text fields
+  if (window.getSelection) {
+    selectedText = window.getSelection().toString();
+  }
+  // For older versions of Internet Explorer
+  else if (document.selection && document.selection.type !== 'Control') {
+    selectedText = document.selection.createRange().text;
+  }
+
+  // Check for selected text in input fields and textareas
+  const activeElement = document.activeElement;
+  if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+    const start = activeElement.selectionStart;
+    const end = activeElement.selectionEnd;
+    if (start !== end) {
+      selectedText = activeElement.value.substring(start, end);
+    }
+  }
+
+  return selectedText.trim();
+}
+
+function hideButton() {
+  setTimeout(() => {
+    if (window.processButton) {
+      window.processButton.style.display = 'none';
+    }
+  }, 100);
+}
+
 function showButton(event) {
-  const selection = window.getSelection();
-  const selectedText = selection.toString().trim();
-  
-  if (selectedText.length > 0) {
-    lastSelection = {
-      text: selectedText,
-      range: selection.getRangeAt(0)
-    };
-    const rect = selection.getRangeAt(0).getBoundingClientRect();
-    
+  const selectedText = getSelectedText();
+
+  console.log("selectedText", selectedText);
+
+  if (selectedText && selectedText.length > 0 && !isLoading) {
+    saveSelection();
+    const rect = window.getSelection().getRangeAt(0).getBoundingClientRect();
+
     const button = createButton();
-    
+
     button.style.left = `${rect.right + window.scrollX}px`;
     button.style.top = `${rect.bottom + window.scrollY + 5}px`;
     button.style.display = 'block';
-    
+
     button.style.opacity = '0';
     button.style.transition = 'opacity 0.3s ease';
     setTimeout(() => {
@@ -126,31 +279,25 @@ function showButton(event) {
   } else {
     hideButton();
   }
-}
 
-function hideButton() {
-  if (processButton) {
-    processButton.style.display = 'none';
+  if(isLoading) {
+    hideButton();
   }
 }
 
-function replaceSelectedText(newText) {
-  if (lastSelection) {
-    const range = lastSelection.range;
-    range.deleteContents();
-    range.insertNode(document.createTextNode(newText));
-  }
-}
 
 function showResponse(response) {
   hideSpinner();
-  
+
   // Parse the response if it's a string
   const parsedResponse = typeof response === 'string' ? JSON.parse(response) : response;
-  
-  // Only replace the selected text if there's no error
+
+  // Copy the improved text to clipboard instead of replacing the selected text
+  console.log('parsedResponse', parsedResponse);
   if (!parsedResponse.hasError) {
-    replaceSelectedText(parsedResponse.improvedText);
+    navigator.clipboard.writeText(parsedResponse.response)
+      .then(() => console.log('Result text copied to clipboard'))
+      .catch(err => console.error('Error copying text: ', err));
   }
 
   const div = document.createElement('div');
@@ -190,7 +337,7 @@ function showResponse(response) {
   icon.style.color = parsedResponse.hasError ? '#FFA500' : '#4CAF50';
 
   const title = document.createElement('span');
-  title.textContent = parsedResponse.hasError ? 'Error Occurred' : 'Text Improved Successfully!';
+  title.textContent = parsedResponse.hasError ? 'Error Occurred' : 'Text Processed Successfully!';
   title.style.fontWeight = 'bold';
   title.style.color = parsedResponse.hasError ? '#FFA500' : '#4a90e2';
   title.style.fontSize = '16px';
@@ -248,7 +395,7 @@ function showResponse(response) {
     justificationBox.style.boxSizing = 'border-box';
 
     const improvedTextArea = document.createElement('textarea');
-    improvedTextArea.value = parsedResponse.improvedText;
+    improvedTextArea.value = parsedResponse.response;
     improvedTextArea.style.width = '100%';
     improvedTextArea.style.height = '80px';
     improvedTextArea.style.marginBottom = '15px';
@@ -261,8 +408,15 @@ function showResponse(response) {
     improvedTextArea.style.color = '#333333';
     improvedTextArea.style.boxSizing = 'border-box';
 
+    const clipboardNotice = document.createElement('p');
+    clipboardNotice.textContent = 'The improved text has been automatically copied to your clipboard.';
+    clipboardNotice.style.color = '#4CAF50';
+    clipboardNotice.style.fontSize = '12px';
+    clipboardNotice.style.marginBottom = '10px';
+    clipboardNotice.style.textAlign = 'center';
+
     const copyButton = document.createElement('button');
-    copyButton.textContent = 'Copy Improved Text';
+    copyButton.textContent = 'Copy Again';
     copyButton.style.width = '100%';
     copyButton.style.backgroundColor = '#4a90e2';
     copyButton.style.color = 'white';
@@ -274,7 +428,7 @@ function showResponse(response) {
     copyButton.style.fontWeight = 'bold';
     copyButton.style.transition = 'background-color 0.3s ease';
     copyButton.style.boxSizing = 'border-box';
-    
+
     copyButton.addEventListener('mouseover', () => {
       copyButton.style.backgroundColor = '#357abd';
     });
@@ -287,13 +441,14 @@ function showResponse(response) {
       copyButton.textContent = 'Copied!';
       copyButton.style.backgroundColor = '#4CAF50';
       setTimeout(() => {
-        copyButton.textContent = 'Copy Improved Text';
+        copyButton.textContent = 'Copy Again';
         copyButton.style.backgroundColor = '#4a90e2';
       }, 2000);
     });
 
     contentContainer.appendChild(justificationBox);
     contentContainer.appendChild(improvedTextArea);
+    contentContainer.appendChild(clipboardNotice);
     contentContainer.appendChild(copyButton);
   }
 
@@ -314,6 +469,14 @@ function showResponse(response) {
 }
 document.addEventListener('mouseup', showButton);
 document.addEventListener('selectionchange', showButton);
+
+// Add this new event listener
+document.addEventListener('mousedown', (event) => {
+  // Check if the click is outside the button
+  if (window.processButton && !window.processButton.contains(event.target)) {
+    hideButton();
+  }
+});
 
 createButton();
 
